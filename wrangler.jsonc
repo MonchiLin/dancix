@@ -8,7 +8,7 @@
   ],
   "d1_databases": [
     {
-      "binding": "luma_words",
+      "binding": "DB",
       "database_name": "luma-words",
       "database_id": "9eb2facb-b945-4df0-a94e-1ae5ccfb87c4"
     }
