@@ -8,7 +8,7 @@
 核心功能：抓取/导入 -> AI 生成 -> D1 存储（长期归档可回看）-> `web-highlighter` 高亮批注 -> **AI 长难句解析**。
 
 ## 关键前提与风险 (务必先确认)
-1. **不依赖 Cron**：本项目不做自动拉取，所有抓取/生成均由管理员手动触发，因此不需要 Scheduled Trigger；若未来想自动化，再引入独立 Worker + Scheduled Trigger。
+1. **启用 Cron Worker**：已引入独立 Worker + Scheduled Trigger。规则：每小时抓词；北京时间 12/13/14 点尝试生成（同日每个 profile 最多 3 次，成功后不再重试）。
 2. **扇贝数据抓取的稳定性未知**：`shanby.js` 依赖登录态 Cookie + 私有接口/加密返回。
     * Worker 侧通常只能把 Cookie 当作 Secret 使用，可能**过期/被风控**。
     * 部署策略：Cookie 以环境变量提供（例如 `SHANBAY_COOKIE`），仅后端使用，不落库、不回传前端。
@@ -30,7 +30,7 @@
 
 ## 拟定架构
 *   **Web App**: Astro (SSR) + React，部署在 **Cloudflare Pages**。
-*   **Tasks/ETL**: 管理员手动触发的后端任务（Astro API Routes 或可选独立 Worker HTTP）负责抓取 + 生成 + 写 D1（不使用 Scheduled Trigger）。
+*   **Tasks/ETL**: 由 Cron Worker 每小时抓词，并在北京时间 12/13/14 点触发生成；管理员接口仍可手动触发。
 *   **Data**: Cloudflare D1 (SQLite) + Drizzle ORM（schema/migration 统一管理）。
 *   **Style**: TailwindCSS + Radix Themes + Typography Plugin。
 *   **Annotation**: `web-highlighter`（前端高亮/选择锚定 + 持久化数据结构，后端落库）。
@@ -57,9 +57,10 @@
 
 > 备注：`model_setting.model` 以你接入的 OpenAI-compatible 服务实际模型名为准；同一模型想生成多套就建多个 profile（不需要数组/计数）。
 
-### 1. 任务：先抓取单词，再生成文章（全手动触发）
+### 1. 任务：先抓取单词，再生成文章（定时 + 可手动触发）
 触发方式：
-*   管理员手动触发（默认）。
+*   定时触发（每小时抓词；北京时间 12/13/14 点生成）。
+*   管理员仍可手动触发。
 
 约束：先抓取当日 NEW/REVIEW 写入 `daily_words`，再创建生成任务；同一天可多次生成（多套），用于 A/B、不同 profile（不同模型/参数）或重复生成；不做无限重试/兜底/降级（Fail Fast，LLM 结构化输出允许一次修复重生成）。
 
