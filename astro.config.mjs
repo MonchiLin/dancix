@@ -13,6 +13,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
+  // Disable session storage to avoid KV binding requirements.
+  session: {
+    driver: 'null'
+  },
   integrations: [react()],
 
   vite: {
@@ -51,5 +55,5 @@ export default defineConfig({
     },
   },
 
-  adapter: cloudflare()
+  adapter: cloudflare({imageService: "compile"})
 });
