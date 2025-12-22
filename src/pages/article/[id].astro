@@ -5,93 +5,43 @@ import ArticleContent from "../../components/ArticleContent.astro";
 import ArticleHeader from "../../components/ArticleHeader.astro";
 import WordSidebar from "../../components/WordSidebar";
 import AudioPlayer from "../../components/AudioPlayer";
-import { and, eq, isNotNull } from "drizzle-orm";
-import { articles, tasks } from "../../../db/schema";
 import { getDb } from "../../lib/db";
 import { isAdminRequest } from "../../lib/admin";
+import {
+	getArticleWithDetails,
+} from "../../lib/articles/service";
+import {
+	extractSources,
+	extractWordDefinitions,
+	formatDateLabel,
+	mapToSidebarWords,
+	parseArticleContent,
+	getInitialArticleData,
+} from "../../lib/articles/utils";
+import type { ArticleParsedContent } from "../../lib/articles/types";
 
 const id = Astro.params.id;
 if (!id) Astro.response.status = 404;
 
 const db = getDb(Astro.locals);
-const rows = id
-	? await db
-			.select()
-			.from(articles)
-			.innerJoin(tasks, eq(articles.generationTaskId, tasks.id))
-			.where(
-				and(
-					eq(articles.id, id),
-					eq(articles.status, "published"),
-					isNotNull(tasks.publishedAt),
-				),
-			)
-			.limit(1)
-	: [];
-
-const row = rows[0] ?? null;
+const row = id ? await getArticleWithDetails(db, id) : null;
 if (!row) Astro.response.status = 404;
 
 const isAdmin = isAdminRequest(Astro.request, Astro.locals);
 
-let parsed: any = null;
+let parsed: ArticleParsedContent = {};
 if (row) {
 	try {
-		parsed = JSON.parse(row.articles.contentJson);
-	} catch {
-		throw new Error("Invalid content_json: JSON parse failed");
+		parsed = parseArticleContent(row.articles.contentJson);
+	} catch (e) {
+		throw e;
 	}
 }
 
-if (
-	!Array.isArray(parsed?.result?.sources) ||
-	!parsed.result.sources.every((s: unknown) => typeof s === "string")
-) {
-	throw new Error("Invalid content_json: sources must be string[]");
-}
-const sources: string[] = parsed.result.sources;
-
-// 从 LLM 输出中提取 word_definitions
-const wordDefinitions: Array<{
-	word: string;
-	phonetic: string;
-	definitions: { pos: string; definition: string }[];
-}> = (() => {
-	const defs = parsed?.result?.word_definitions;
-	if (!Array.isArray(defs)) {
-		throw new Error("Invalid content_json: word_definitions must be array");
-	}
-	return defs;
-})();
-
-// 构建侧栏展示所需词汇数据
-const sidebarWords = wordDefinitions.map((w) => ({
-	word: w.word,
-	phonetic: w.phonetic || "",
-	definitions: w.definitions || [],
-}));
-
-const weekdayNames = [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday",
-];
-
-function formatDateLabel(value?: string | null) {
-	if (!value) return "";
-	const iso = value.includes("T") ? value : `${value}T00:00:00`;
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return value;
-	const weekday = weekdayNames[date.getDay()] ?? "";
-	const yyyy = String(date.getFullYear());
-	const mm = String(date.getMonth() + 1).padStart(2, "0");
-	const dd = String(date.getDate()).padStart(2, "0");
-	return weekday ? `${weekday}, ${yyyy}/${mm}/${dd}` : `${yyyy}/${mm}/${dd}`;
-}
+const sources = parsed?.result ? extractSources(parsed) : [];
+const wordDefinitions = parsed?.result ? extractWordDefinitions(parsed) : [];
+const sidebarWords = mapToSidebarWords(wordDefinitions);
+const initialData = parsed ? getInitialArticleData(parsed) : null;
 
 const dateLabel = row ? formatDateLabel(row.tasks.taskDate) : "";
 const sourceAnchorId = sources.length > 0 ? "article-sources" : null;
@@ -113,58 +63,31 @@ const sourceAnchorId = sources.length > 0 ? "article-sources" : null;
 							<ArticleTabs
 								client:only="react"
 								articleId={row.articles.id}
-								articles={parsed.result.articles}
+								articles={parsed!.result!.articles!}
 								initialIsAdmin={isAdmin}
 								title={row.articles.title}
 								dateLabel={dateLabel}
 								sourceAnchorId={sourceAnchorId}
 								targetWords={sidebarWords.map((w) => w.word)}
 							>
-								{(() => {
-									const sorted: {
-										level: 1 | 2 | 3;
-										level_name: string;
-										content: string;
-									}[] = [...parsed.result.articles].sort(
-										(a: any, b: any) => a.level - b.level,
-									);
-									const current = sorted[0];
-									if (!current) return null;
-
-									const text = current.content ?? "";
-									const words = text
-										.trim()
-										.split(/\s+/)
-										.filter(Boolean);
-									const count = words.length;
-									const minutes = count
-										? Math.max(1, Math.ceil(count / 120))
-										: 0;
-									const minuteLabel =
-										minutes === 1 ? "minute" : "minutes";
-
-									return (
-										<div class="relative">
-											<div class="bg-white rounded-3xl border border-gray-100 p-6 md:p-8">
-												<ArticleHeader
-													title={
-														row.articles.title || ""
-													}
-													publishDate={
-														dateLabel || ""
-													}
-													stats={{
-														readCount: 0,
-														readingTime: `${minutes} ${minuteLabel}`,
-													}}
-												/>
-												<ArticleContent
-													content={text}
-												/>
-											</div>
+								{initialData && (
+									<div class="relative">
+										<div class="bg-white rounded-3xl border border-gray-100 p-6 md:p-8">
+											<ArticleHeader
+												title={row.articles.title || ""}
+												publishDate={dateLabel || ""}
+												stats={{
+													readCount: 0,
+													readingTime:
+														initialData.readingTime,
+												}}
+											/>
+											<ArticleContent
+												content={initialData.content}
+											/>
 										</div>
-									);
-								})()}
+									</div>
+								)}
 							</ArticleTabs>
 						) : (
 							<div class="rounded-xl border border-black/10 bg-white/60 p-5 text-sm opacity-70">

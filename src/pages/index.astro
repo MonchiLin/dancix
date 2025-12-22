@@ -1,18 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import HomeWorkspace from "@/components/HomeWorkspace";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
-import { tasks } from "../../db/schema";
 import { getDb } from "../lib/db";
+import { getPublishedTasks } from "../lib/articles/service";
 
 const db = getDb(Astro.locals);
-const publishedTasks = await db
-	.select({ taskDate: tasks.taskDate })
-	.from(tasks)
-	.where(
-		and(eq(tasks.type, "article_generation"), isNotNull(tasks.publishedAt)),
-	)
-	.orderBy(desc(tasks.taskDate));
+const publishedTasks = await getPublishedTasks(db);
 
 const publishedDays = Array.from(
 	new Set(publishedTasks.map((t) => t.taskDate)),
