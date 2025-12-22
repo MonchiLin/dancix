@@ -7,7 +7,6 @@ export const generationProfiles = sqliteTable(
 		id: text('id').primaryKey(),
 		name: text('name').notNull(),
 		topicPreference: text('topic_preference').notNull(),
-		modelSettingJson: text('model_setting_json').notNull(),
 		concurrency: integer('concurrency').notNull(),
 		timeoutMs: integer('timeout_ms').notNull(),
 		createdAt: text('created_at')
@@ -20,7 +19,6 @@ export const generationProfiles = sqliteTable(
 	(table) => [
 		uniqueIndex('uq_generation_profiles_name').on(table.name),
 		index('idx_generation_profiles_topic_preference').on(table.topicPreference),
-		check('chk_generation_profiles_model_setting_json_valid', sql`json_valid(${table.modelSettingJson})`),
 		check('chk_generation_profiles_concurrency_gt0', sql`${table.concurrency} > 0`),
 		check('chk_generation_profiles_timeout_ms_gt0', sql`${table.timeoutMs} > 0`)
 	]
@@ -43,6 +41,7 @@ export const tasks = sqliteTable(
 		resultJson: text('result_json'),
 		errorMessage: text('error_message'),
 		errorContextJson: text('error_context_json'),
+		version: integer('version').notNull().default(0), // For optimistic locking
 		createdAt: text('created_at')
 			.notNull()
 			.default(sql`(CURRENT_TIMESTAMP)`),

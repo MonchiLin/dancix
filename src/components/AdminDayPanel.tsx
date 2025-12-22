@@ -49,8 +49,8 @@ export default function AdminDayPanel(props: { date: string; onRefreshRequest?: 
 		if (tasks.length === 0) setLoading(true);
 		setError(null);
 		try {
-			const data = await fetchJson(`/api/admin/tasks?task_date=${encodeURIComponent(props.date)}`, adminKey);
-			setTasks((data?.tasks ?? []) as TaskRow[]);
+			const data = await fetchJson<{ tasks?: TaskRow[] }>(`/api/admin/tasks?task_date=${encodeURIComponent(props.date)}`, adminKey);
+			setTasks(data?.tasks ?? []);
 		} catch (e) {
 			setError((e as Error).message);
 		} finally {
@@ -71,9 +71,9 @@ export default function AdminDayPanel(props: { date: string; onRefreshRequest?: 
 		if (!hasActiveTasks) return;
 
 		const timer = setInterval(() => {
-			fetchJson(`/api/admin/tasks?task_date=${encodeURIComponent(props.date)}`, adminKey!)
+			fetchJson<{ tasks?: TaskRow[] }>(`/api/admin/tasks?task_date=${encodeURIComponent(props.date)}`, adminKey!)
 				.then(data => {
-					const newTasks = (data?.tasks ?? []) as TaskRow[];
+					const newTasks = data?.tasks ?? [];
 					setTasks(newTasks);
 
 					// 检查是否有任务刚刚完成 (从我们的视角看，只要有 succeeded 的任务，也许是新的)

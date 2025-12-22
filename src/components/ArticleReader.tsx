@@ -54,23 +54,15 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
 
             {/* Article Header */}
             <header className="mb-12 md:mb-16">
-                {/* Meta Top Line */}
-                <div className="flex items-center gap-3 text-xs md:text-sm font-bold tracking-widest uppercase text-stone-500 mb-6 border-b-2 border-slate-900 pb-2">
-                    <span className="text-slate-900">{publishDate}</span>
-                    <span className="text-stone-300">|</span>
-                    <span>{stats.readCount} Reads</span>
-                    <span className="text-stone-300">|</span>
-                    <span>{stats.readingTime}</span>
-                </div>
-
-                {/* Huge Serif Title */}
-                <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] font-serif mb-8">
-                    {title}
-                </h1>
-
-                {/* Level Control - Integrated & Minimal */}
-                <div className="flex items-center justify-between border-t border-b border-stone-200 py-3">
-                    <span className="text-xs font-serif italic text-stone-500">Reading Level Adjustment</span>
+                {/* Meta Top Line with Level Control */}
+                <div className="flex items-center justify-between text-xs md:text-sm font-bold tracking-widest uppercase text-stone-500 mb-6 border-b-2 border-slate-900 pb-2">
+                    <div className="flex items-center gap-3">
+                        <span className="text-slate-900">{publishDate}</span>
+                        <span className="text-stone-300">|</span>
+                        <span>{stats.readCount} Reads</span>
+                        <span className="text-stone-300">|</span>
+                        <span>{stats.readingTime}</span>
+                    </div>
                     <div className="flex gap-1">
                         {[1, 2, 3].map((l) => {
                             const isActive = level === l;
@@ -91,6 +83,11 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
                         })}
                     </div>
                 </div>
+
+                {/* Huge Serif Title */}
+                <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] font-serif">
+                    {title}
+                </h1>
             </header>
 
             {/* Article Content */}

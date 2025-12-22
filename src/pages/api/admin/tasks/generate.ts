@@ -24,8 +24,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		const queue = new TaskQueue(db);
 		const tasks = await queue.enqueue(taskDate, 'manual');
 
-		// Queue processing is handled by Cron Worker (every 5 minutes)
-		// to avoid Pages Functions IoContext timeout on long-running LLM calls
+		// Start processing the queue immediately (in background)
+		locals.runtime.ctx.waitUntil(queue.processQueue(taskDate, locals.runtime.env));
 
 		return json({ ok: true, task_date: taskDate, tasks }, { status: 201 });
 	} catch (err) {

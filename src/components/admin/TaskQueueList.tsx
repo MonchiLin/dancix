@@ -51,14 +51,14 @@ export default function TaskQueueList({ tasks, onRefresh, onDelete }: TaskQueueL
                         </div>
 
                         <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-stone-500">
-                            <span className="font-mono">{formatTime(t.createdAt)}</span>
+                            <span className="font-mono">{formatTime(t.created_at)}</span>
                             {t.status === 'failed' && <span className="text-red-600 font-bold">Failed</span>}
                             {t.status === 'running' && <span className="text-orange-600 font-bold">Processing</span>}
                         </div>
 
-                        {t.errorMessage && (
+                        {t.error_message && (
                             <div className="text-[10px] text-red-600 font-serif italic mt-1 bg-red-50 p-1.5 leading-tight">
-                                {t.errorMessage}
+                                {t.error_message}
                             </div>
                         )}
                     </div>

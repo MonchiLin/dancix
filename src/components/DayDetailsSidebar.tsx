@@ -214,10 +214,6 @@ export default function DayDetailsSidebar({ date, className }: DayDetailsSidebar
                                                                 <h3 className="font-serif text-2xl font-bold text-slate-900 leading-tight">
                                                                     {a.title}
                                                                 </h3>
-                                                                <p className="font-serif text-stone-600 leading-relaxed line-clamp-2">
-                                                                    {/* 假摘要，实际上我们会用副标题或内容前几行 */}
-                                                                    Exploring the nuances of language and vocabulary through the lens of {a.model}...
-                                                                </p>
                                                                 <div className="pt-2 flex items-center justify-between">
                                                                     <span className="text-xs font-sans font-bold uppercase tracking-widest text-stone-400">Read Article</span>
                                                                     {/* Delete Action */}
