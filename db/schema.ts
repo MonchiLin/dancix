@@ -33,7 +33,7 @@ export const tasks = sqliteTable(
 		id: text('id').primaryKey(),
 		taskDate: text('task_date').notNull(), // 业务日期：YYYY-MM-DD（Asia/Shanghai）
 		type: text('type', { enum: ['article_generation'] }).notNull(),
-		triggerSource: text('trigger_source', { enum: ['manual'] })
+		triggerSource: text('trigger_source', { enum: ['manual', 'cron'] })
 			.notNull()
 			.default('manual'),
 		status: text('status', { enum: ['queued', 'running', 'succeeded', 'failed', 'canceled'] }).notNull(),
@@ -57,7 +57,7 @@ export const tasks = sqliteTable(
 		index('idx_tasks_profile_id').on(table.profileId),
 		index('idx_tasks_published_at').on(table.publishedAt),
 		check('chk_tasks_type_enum', sql`${table.type} IN ('article_generation')`),
-		check('chk_tasks_trigger_source_enum', sql`${table.triggerSource} IN ('manual')`),
+		check('chk_tasks_trigger_source_enum', sql`${table.triggerSource} IN ('manual', 'cron')`),
 		check('chk_tasks_status_enum', sql`${table.status} IN ('queued', 'running', 'succeeded', 'failed', 'canceled')`),
 		check('chk_tasks_result_json_valid', sql`${table.resultJson} IS NULL OR json_valid(${table.resultJson})`),
 		check(

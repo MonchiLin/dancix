@@ -1,4 +1,4 @@
-# 每日单词阅读 Prompt 设计方案 (Advanced Edition)
+export const DAILY_NEWS_PROMPT_MD = `# 每日单词阅读 Prompt 设计方案 (Advanced Edition)
 
 ## 1. 提示词工程策略 (Prompt Engineering Strategy)
 
@@ -13,7 +13,7 @@
 
 输出严格结构化 JSON，便于校验与落库。
 
-```json
+\`\`\`json
 {
   "title": "String. 英文标题（共用，简短有力）。",
   "topic": "String. 主题分类（如 Gaming, Tech, Science）。",
@@ -44,7 +44,7 @@
     "missing_words": ["String"]
   }
 }
-```
+\`\`\`
 
 ## 3. 语言学约束规范 (Linguistic Specifications)
 
@@ -63,7 +63,7 @@
 
 > 你是一位专家级的 **ESL 内容开发者** 和 **CEFR 语言评估专家**，你的写作标准对标 *English News in Levels*。
 >
-> 你的任务是根据给定的 `TARGET_VOCABULARY`（目标词汇）和 `TOPIC_PREFERENCE`（主题偏好），生成**一则新闻故事**，并将其改写为**三个截然不同的难度级别**。
+> 你的任务是根据给定的 \`TARGET_VOCABULARY\`（目标词汇）和 \`TOPIC_PREFERENCE\`（主题偏好），生成**一则新闻故事**，并将其改写为**三个截然不同的难度级别**。
 >
 > ### 1. 详细分级规范 (Linguistic Specifications)
 >
@@ -108,8 +108,8 @@
 > 4.  **撰写 Level 3**: 彻底重写，使用高级词汇渲染氛围。
 >
 > ### 3. 词汇处理 (Vocabulary Handling)
-> *   **强制植入**: 必须在三个级别中都尝试包含 `TARGET_VOCABULARY`。
-> *   **自然优先**: 不要为了“全覆盖”而硬塞词；允许少量缺失，并在 `missing_words` 中如实列出。
+> *   **强制植入**: 必须在三个级别中都尝试包含 \`TARGET_VOCABULARY\`。
+> *   **自然优先**: 不要为了“全覆盖”而硬塞词；允许少量缺失，并在 \`missing_words\` 中如实列出。
 > *   **降维打击 (Level 1 策略)**:
 >     *   如果词汇过难 (如 "negotiation")，请使用 **"定义式引入"**:
 >     *   *错误*: The negotiation failed. (太抽象)
@@ -118,21 +118,21 @@
 >
 > ### 4. 输出格式 (Output Format)
 > 请 **严格** 按照提供的 Schema 返回 JSON 格式。
-> **仅输出 JSON**：输出必须是一个单独的 JSON 对象；不要输出解释文字、前后缀、或 Markdown 代码块（```）。
-> **来源要求**：必须提供 `sources`（2-5 个可点击 URL）；如果来源不足，请直接失败（不要编造）。
-> **排版要求**：`articles[*].content` 使用“正常段落排版”，段落之间空一行（即包含 `\n\n`）；不要“一句一行”，每段建议 2-4 句。
+> **仅输出 JSON**：输出必须是一个单独的 JSON 对象；不要输出解释文字、前后缀、或 Markdown 代码块（\`\`\`）。
+> **来源要求**：必须提供 \`sources\`（2-5 个可点击 URL）；如果来源不足，请直接失败（不要编造）。
+> **排版要求**：\`articles[*].content\` 使用“正常段落排版”，段落之间空一行（即包含 \`\\n\\n\`）；不要“一句一行”，每段建议 2-4 句。
 
 ### User Instruction (用户指令)
 
 > **输入数据:**
-> `CURRENT_DATE`: "YYYY-MM-DD"
-> `TARGET_VOCABULARY`: {{json_list_of_words}}
-> `TOPIC_PREFERENCE`: "US Pop Culture / Gaming / Tech" (Or specific news context)
+> \`CURRENT_DATE\`: "YYYY-MM-DD"
+> \`TARGET_VOCABULARY\`: {{json_list_of_words}}
+> \`TOPIC_PREFERENCE\`: "US Pop Culture / Gaming / Tech" (Or specific news context)
 >
 > **任务要求:**
-> 1.  **严格时效性**: 必须检索并播报 **`CURRENT_DATE` 当天** 发生的真实新闻。**严禁** 使用非当日的“近期新闻”糊弄。
-> 2.  **话题匹配**: 在该日期下，优先选择符合 `TOPIC_PREFERENCE` 的事件。
-> 3.  **生成**: 基于该真实新闻，融合 `TARGET_VOCABULARY` 生成三级阅读文章。
+> 1.  **严格时效性**: 必须检索并播报 **\`CURRENT_DATE\` 当天** 发生的真实新闻。**严禁** 使用非当日的“近期新闻”糊弄。
+> 2.  **话题匹配**: 在该日期下，优先选择符合 \`TOPIC_PREFERENCE\` 的事件。
+> 3.  **生成**: 基于该真实新闻，融合 \`TARGET_VOCABULARY\` 生成三级阅读文章。
 >
 > **长度提醒:**
 > *   L1: ~80-110 words
@@ -140,3 +140,4 @@
 > *   L3: ~210-260 words
 >
 > 请执行生成。
+`;

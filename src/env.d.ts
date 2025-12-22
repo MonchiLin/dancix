@@ -13,8 +13,8 @@ type LumaWordsEnv = {
 
 declare global {
 	namespace App {
-		interface Locals extends Runtime<LumaWordsEnv> {}
+		interface Locals extends Runtime<LumaWordsEnv> { }
 	}
 }
 
-export {};
+export { };

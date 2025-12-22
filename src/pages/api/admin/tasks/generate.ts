@@ -4,8 +4,7 @@ import { requireAdmin } from '../../../../lib/admin';
 import { getDb } from '../../../../lib/db';
 import { badRequest, json } from '../../../../lib/http';
 
-import { runArticleGenerationTaskViaHttp } from '../../../../lib/tasks/articleGeneration';
-import { enqueueGenerationTasks, startNextQueuedIfIdle } from '../../../../lib/tasks/generationQueue';
+import { TaskQueue } from '../../../../lib/tasks/TaskQueue';
 
 const bodySchema = z.object({
 	task_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -16,27 +15,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
 	if (denied) return denied;
 
 	try {
-		const raw = await request.text();
-		if (!raw.trim()) return badRequest('请求体为空');
-		let body: unknown;
-		try {
-			body = JSON.parse(raw);
-		} catch (err) {
-			return badRequest('请求体不是合法 JSON', { message: err instanceof Error ? err.message : String(err) });
-		}
-
-		const parsed = bodySchema.safeParse(body);
-		if (!parsed.success) return badRequest('Invalid request body', parsed.error.flatten());
+		const parsed = bodySchema.safeParse(await request.json());
+		if (!parsed.success) return badRequest('Invalid body', parsed.error.flatten());
 
 		const db = getDb(locals);
 		const taskDate = parsed.data.task_date;
-		const created = await enqueueGenerationTasks(db, taskDate);
 
-		await startNextQueuedIfIdle(db, taskDate, (taskId) => {
-			locals.runtime.ctx.waitUntil(runArticleGenerationTaskViaHttp(locals, taskId));
-		});
+		const queue = new TaskQueue(db);
+		const tasks = await queue.enqueue(taskDate, 'manual');
 
-		return json({ ok: true, task_date: taskDate, tasks: created }, { status: 201 });
+		// Queue processing is handled by Cron Worker (every 5 minutes)
+		// to avoid Pages Functions IoContext timeout on long-running LLM calls
+
+		return json({ ok: true, task_date: taskDate, tasks }, { status: 201 });
 	} catch (err) {
 		console.error('POST /api/admin/tasks/generate failed', err);
 		const message = err instanceof Error ? err.message : String(err);

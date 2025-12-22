@@ -42,7 +42,7 @@ CREATE TABLE tasks (
 	published_at text,
 	FOREIGN KEY (profile_id) REFERENCES generation_profiles(id) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT chk_tasks_type_enum CHECK(type IN ('article_generation')),
-	CONSTRAINT chk_tasks_trigger_source_enum CHECK(trigger_source IN ('manual')),
+	CONSTRAINT "chk_tasks_trigger_source_enum" CHECK ("tasks"."trigger_source" IN ('manual', 'cron')),
 	CONSTRAINT chk_tasks_status_enum CHECK(status IN ('queued', 'running', 'succeeded', 'failed', 'canceled')),
 	CONSTRAINT chk_tasks_result_json_valid CHECK(result_json IS NULL OR json_valid(result_json)),
 	CONSTRAINT chk_tasks_error_context_json_valid CHECK(error_context_json IS NULL OR json_valid(error_context_json)),

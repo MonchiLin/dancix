@@ -1,0 +1,43 @@
+
+> luma-words@0.0.1 check
+> astro check
+
+[2m19:35:46[22m [34m[content][39m Syncing content
+[2m19:35:46[22m [34m[content][39m Synced content
+[2m19:35:46[22m [34m[types][39m Generated [2m318ms[22m
+[2m19:35:46[22m [34m[check][39m Getting diagnostics for Astro files in D:\Creative\dancix...
+[90m│[39m
+[33m▲[39m  No story files found for the specified pattern: [34msrc\**\*.mdx[39m
+[96msrc/components/admin/TaskQueueList.tsx[0m:[93m31[0m:[93m36[0m - [91merror[0m[90m ts(2339): [0mProperty 'profileName' does not exist on type 'TaskRow'.
+
+[7m31[0m                                 {t.profileName || 'Default Edition'}
+[7m  [0m [91m                                   ~~~~~~~~~~~[0m
+
+[96msrc/lib/tasks/TaskQueue.ts[0m:[93m1[0m:[93m24[0m - [93mwarning[0m[90m ts(6133): [0m'sql' is declared but its value is never read.
+
+[7m1[0m import { and, asc, eq, sql } from 'drizzle-orm';
+[7m [0m [93m                       ~~~[0m
+
+[96msrc/lib/tasks/articleGeneration.ts[0m:[93m151[0m:[93m8[0m - [91merror[0m[90m ts(2322): [0mType '{}' is not assignable to type 'string'.
+
+[7m151[0m  const model: string = llmModel;
+[7m   [0m [91m       ~~~~~[0m
+[96msrc/lib/tasks/articleGeneration.ts[0m:[93m143[0m:[93m8[0m - [93mwarning[0m[90m ts(6133): [0m'taskDate' is declared but its value is never read.
+
+[7m143[0m  const taskDate = task.taskDate;
+[7m   [0m [93m       ~~~~~~~~[0m
+
+[96mworkers/cron/index.ts[0m:[93m21[0m:[93m55[0m - [93mwarning[0m[90m ts(6133): [0m'ctx' is declared but its value is never read.
+
+[7m21[0m  async scheduled(event: ScheduledEvent, env: CronEnv, ctx: ExecutionContext) {
+[7m  [0m [93m                                                      ~~~[0m
+[96mworkers/cron/index.ts[0m:[93m21[0m:[93m18[0m - [93mwarning[0m[90m ts(6133): [0m'event' is declared but its value is never read.
+
+[7m21[0m  async scheduled(event: ScheduledEvent, env: CronEnv, ctx: ExecutionContext) {
+[7m  [0m [93m                 ~~~~~[0m
+
+Result (69 files): 
+- 2 errors
+- 0 warnings
+- 4 hints
+

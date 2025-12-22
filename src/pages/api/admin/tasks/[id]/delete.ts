@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { eq, inArray } from 'drizzle-orm';
+import { TaskQueue } from '../../../../../lib/tasks/TaskQueue';
 import { articles, highlights, tasks } from '../../../../../../db/schema';
 import { requireAdmin } from '../../../../../lib/admin';
 import { getDb } from '../../../../../lib/db';
@@ -15,11 +16,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
 		const db = getDb(locals);
 		const taskRows = await db
-			.select({ id: tasks.id })
+			.select({ id: tasks.id, taskDate: tasks.taskDate })
 			.from(tasks)
 			.where(eq(tasks.id, taskId))
 			.limit(1);
-		if (!taskRows[0]) return notFound();
+		const targetTask = taskRows[0];
+		if (!targetTask) return notFound();
 
 		const articleRows = await db
 			.select({ id: articles.id })
@@ -37,6 +39,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 		}
 
 		await db.delete(tasks).where(eq(tasks.id, taskId));
+
+		// 如果删除了一个任务（可能是 queued 或 running），尝试从队列中启动下一个
+		// 这样队列不会因为前一个任务被删而卡死
+		const taskDate = targetTask.taskDate;
+		const queue = new TaskQueue(db);
+		locals.runtime.ctx.waitUntil(queue.processQueue(taskDate, locals.runtime.env));
 
 		return json({ ok: true });
 	} catch (err) {
