@@ -3,8 +3,8 @@ import Layout from "../../layouts/Layout.astro";
 import ArticleTabs from "../../components/ArticleTabs";
 import WordSidebar from "../../components/WordSidebar";
 import AudioPlayer from "../../components/AudioPlayer";
-import { and, eq, isNotNull, inArray } from "drizzle-orm";
-import { articles, tasks, words } from "../../../db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { articles, tasks } from "../../../db/schema";
 import { getDb } from "../../lib/db";
 import { isAdminRequest } from "../../lib/admin";
 
@@ -62,32 +62,11 @@ const wordDefinitions: Array<{
 	return defs;
 })();
 
-// 从 DB 读取掌握状态
-let wordStatusMap: Record<string, "unknown" | "familiar" | "mastered"> = {};
-if (wordDefinitions.length > 0) {
-	const wordRows = await db
-		.select({ word: words.word, masteryStatus: words.masteryStatus })
-		.from(words)
-		.where(
-			inArray(
-				words.word,
-				wordDefinitions.map((w) => w.word),
-			),
-		);
-	for (const r of wordRows) {
-		wordStatusMap[r.word] = r.masteryStatus as
-			| "unknown"
-			| "familiar"
-			| "mastered";
-	}
-}
-
 // 构建侧栏展示所需词汇数据
 const sidebarWords = wordDefinitions.map((w) => ({
 	word: w.word,
 	phonetic: w.phonetic || "",
 	definitions: w.definitions || [],
-	masteryStatus: wordStatusMap[w.word],
 }));
 
 const weekdayNames = [

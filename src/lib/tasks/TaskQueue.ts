@@ -1,9 +1,8 @@
-import { and, eq, inArray, sql, lt, or, isNull } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../../../db/schema';
-import { articles, dailyWords, generationProfiles, tasks, wordLearningRecords } from '../../../db/schema';
+import { articles, dailyWords, generationProfiles, tasks } from '../../../db/schema';
 import { generateDailyNewsWithWordSelection, type CandidateWord } from '../llm/openaiCompatible';
-import { DAILY_NEWS_SYSTEM_PROMPT } from '../llm/openaiPrompts';
 
 type Db = DrizzleD1Database<typeof schema>;
 
@@ -14,16 +13,8 @@ type EnvWithModel = {
     [key: string]: unknown;
 };
 
-// Lock duration in minutes
-const LOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
-
 function uniqueStrings(input: string[]) {
     return Array.from(new Set(input.filter((x) => typeof x === 'string' && x.length > 0)));
-}
-
-function mergeResultJson(prev: unknown, next: Record<string, unknown>) {
-    if (prev && typeof prev === 'object' && !Array.isArray(prev)) return { ...(prev as any), ...next };
-    return next;
 }
 
 /**
@@ -62,52 +53,35 @@ async function getUsedWordsToday(db: Db, taskDate: string): Promise<Set<string>>
 }
 
 /**
- * Build candidate words with SRS information
+ * Build candidate words for article generation.
+ * New words are prioritized over review words.
  */
-async function buildCandidateWords(
-    db: Db,
+function buildCandidateWords(
     newWords: string[],
     reviewWords: string[],
     usedWords: Set<string>
-): Promise<CandidateWord[]> {
+): CandidateWord[] {
     const allWords = uniqueStrings([...newWords, ...reviewWords]).filter((w) => !usedWords.has(w));
     if (allWords.length === 0) return [];
 
-    const CHUNK_SIZE = 50;
-    const allRecords: Array<typeof wordLearningRecords.$inferSelect> = [];
-    for (let i = 0; i < allWords.length; i += CHUNK_SIZE) {
-        const chunk = allWords.slice(i, i + CHUNK_SIZE);
-        const rows = await db
-            .select()
-            .from(wordLearningRecords)
-            .where(inArray(wordLearningRecords.word, chunk));
-        allRecords.push(...rows);
-    }
-
-    const recordByWord = new Map(allRecords.map((r) => [r.word, r]));
     const newWordSet = new Set(newWords);
-
-    const now = new Date();
     const candidates: CandidateWord[] = [];
 
     for (const word of allWords) {
-        const record = recordByWord.get(word);
         const type = newWordSet.has(word) ? 'new' : 'review';
-        const state = (record?.state ?? 'new') as CandidateWord['state'];
-        const dueAt = record?.dueAt ? new Date(record.dueAt) : now;
-        const due = dueAt <= now;
-
-        candidates.push({ word, type, due, state });
+        candidates.push({ word, type });
     }
 
+    // Sort: new words first, then review words
     candidates.sort((a, b) => {
-        const scoreA = (a.type === 'new' ? 2 : 0) + (a.due ? 4 : 0);
-        const scoreB = (b.type === 'new' ? 2 : 0) + (b.due ? 4 : 0);
-        return scoreB - scoreA;
+        if (a.type === 'new' && b.type !== 'new') return -1;
+        if (a.type !== 'new' && b.type === 'new') return 1;
+        return 0;
     });
 
     return candidates;
 }
+
 
 /**
  * Reliable Task Queue with optimistic locking
@@ -298,7 +272,7 @@ export class TaskQueue {
         }
 
         const usedWords = await getUsedWordsToday(this.db, task.taskDate);
-        const candidates = await buildCandidateWords(this.db, newWords, reviewWords, usedWords);
+        const candidates = buildCandidateWords(newWords, reviewWords, usedWords);
 
         if (candidates.length === 0) {
             throw new Error('All words have been used today');
@@ -314,7 +288,6 @@ export class TaskQueue {
         const output = await generateDailyNewsWithWordSelection({
             env,
             model,
-            systemPrompt: DAILY_NEWS_SYSTEM_PROMPT,
             currentDate: task.taskDate,
             topicPreference: profile.topicPreference,
             candidateWords: candidates

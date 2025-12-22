@@ -26,8 +26,6 @@ import { createOpenAiCompatibleClient, type OpenAiCompatibleEnv } from './client
 export type CandidateWord = {
     word: string;
     type: 'new' | 'review';
-    due: boolean;
-    state: 'new' | 'learning' | 'review' | 'relearning';
 };
 
 // ============================================
@@ -177,7 +175,6 @@ async function runDraftGeneration(args: {
     model: string;
     selectedWords: string[];
     sourceUrls: string[];
-    systemPrompt: string;
     currentDate: string;
     topicPreference: string;
 }) {
@@ -189,7 +186,6 @@ async function runDraftGeneration(args: {
         content: buildDraftGenerationUserPrompt({
             selectedWords: args.selectedWords,
             sourceUrls: args.sourceUrls,
-            systemPrompt: args.systemPrompt,
             currentDate: args.currentDate,
             topicPreference: args.topicPreference
         })
@@ -269,7 +265,6 @@ async function runJsonConversion(args: {
 export async function generateDailyNewsWithWordSelection(args: {
     env: OpenAiCompatibleEnv;
     model: string;
-    systemPrompt: string;
     currentDate: string;
     topicPreference: string;
     candidateWords: CandidateWord[];
@@ -305,7 +300,6 @@ export async function generateDailyNewsWithWordSelection(args: {
         model: args.model,
         selectedWords: wordSelection.selectedWords,
         sourceUrls: research.sourceUrls,
-        systemPrompt: args.systemPrompt,
         currentDate: args.currentDate,
         topicPreference: args.topicPreference
     });

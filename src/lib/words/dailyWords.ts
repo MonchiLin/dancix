@@ -1,8 +1,7 @@
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../../../db/schema';
-import { dailyWords, words, wordLearningRecords } from '../../../db/schema';
+import { dailyWords, words } from '../../../db/schema';
 import { fetchShanbayTodayWords } from '../shanbay';
-import { applyShanbaySrsSync } from '../srs';
 
 type Db = DrizzleD1Database<typeof schema>;
 
@@ -48,10 +47,9 @@ export async function fetchAndStoreDailyWords(
 			}
 		});
 
-	// 写入 words 与 word_learning_records（幂等）
+	// 写入 words 表（幂等）
 	const allWords = [...new Set([...newWords, ...reviewWords])];
 	const WORD_INSERT_CHUNK_SIZE = 20;
-	const RECORD_INSERT_CHUNK_SIZE = 10;
 
 	for (let i = 0; i < allWords.length; i += WORD_INSERT_CHUNK_SIZE) {
 		const chunk = allWords.slice(i, i + WORD_INSERT_CHUNK_SIZE);
@@ -61,21 +59,10 @@ export async function fetchAndStoreDailyWords(
 			.onConflictDoNothing();
 	}
 
-	for (let i = 0; i < allWords.length; i += RECORD_INSERT_CHUNK_SIZE) {
-		const chunk = allWords.slice(i, i + RECORD_INSERT_CHUNK_SIZE);
-		await db
-			.insert(wordLearningRecords)
-			.values(chunk.map((w) => ({ word: w })))
-			.onConflictDoNothing();
-	}
-
-	// SRS 同日幂等：每个词每个 task_date 只推进一次（依赖 lastShanbaySyncDate）。
-	const srsSync = await applyShanbaySrsSync(db, { taskDate: args.taskDate, words: allWords });
-
 	return {
 		taskDate: args.taskDate,
 		newCount: newWords.length,
-		reviewCount: reviewWords.length,
-		srsSync
+		reviewCount: reviewWords.length
 	};
 }
+

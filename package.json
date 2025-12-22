@@ -44,7 +44,6 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
     "temporal-polyfill": "^0.3.0",
-    "ts-fsrs": "^5.2.3",
     "uuid": "^13.0.0",
     "web-highlighter": "^0.7.4",
     "zod": "^3.25.76"

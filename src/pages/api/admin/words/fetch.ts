@@ -39,8 +39,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 				ok: true,
 				task_date: result.taskDate,
 				new_count: result.newCount,
-				review_count: result.reviewCount,
-				srs_sync: result.srsSync
+				review_count: result.reviewCount
 			},
 			{ status: 201 }
 		);

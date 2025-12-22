@@ -8,9 +8,7 @@ export type WordDefinition = {
     definitions: { pos: string; definition: string }[];
 };
 
-export type WordInfo = WordDefinition & {
-    masteryStatus: 'unknown' | 'familiar' | 'mastered';
-};
+export type WordInfo = WordDefinition;
 
 function speak(text: string, e: React.MouseEvent) {
     e.stopPropagation(); // Prevent triggering word selection

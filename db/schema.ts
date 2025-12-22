@@ -91,9 +91,6 @@ export const words = sqliteTable(
 	'words',
 	{
 		word: text('word').primaryKey(),
-		masteryStatus: text('mastery_status', { enum: ['unknown', 'familiar', 'mastered'] })
-			.notNull()
-			.default('unknown'),
 		origin: text('origin', { enum: ['shanbay', 'article', 'manual'] }).notNull(),
 		originRef: text('origin_ref'),
 		createdAt: text('created_at')
@@ -104,52 +101,11 @@ export const words = sqliteTable(
 			.default(sql`(CURRENT_TIMESTAMP)`)
 	},
 	(table) => [
-		index('idx_words_mastery_status').on(table.masteryStatus),
 		index('idx_words_origin').on(table.origin),
-		check('chk_words_mastery_status_enum', sql`${table.masteryStatus} IN ('unknown', 'familiar', 'mastered')`),
 		check('chk_words_origin_enum', sql`${table.origin} IN ('shanbay', 'article', 'manual')`)
 	]
 );
 
-// 每词 FSRS 卡片状态，用于到期选择与扇贝同步。
-export const wordLearningRecords = sqliteTable(
-	'word_learning_records',
-	{
-		word: text('word')
-			.primaryKey()
-			.references(() => words.word),
-		createdAt: text('created_at')
-			.notNull()
-			.default(sql`(CURRENT_TIMESTAMP)`),
-		lastShanbaySyncDate: text('last_shanbay_sync_date'),
-		dueAt: text('due_at')
-			.notNull()
-			.default(sql`(CURRENT_TIMESTAMP)`),
-		stability: real('stability').notNull().default(0),
-		difficulty: real('difficulty').notNull().default(0),
-		elapsedDays: integer('elapsed_days').notNull().default(0),
-		scheduledDays: integer('scheduled_days').notNull().default(0),
-		learningSteps: integer('learning_steps').notNull().default(0),
-		reps: integer('reps').notNull().default(0),
-		lapses: integer('lapses').notNull().default(0),
-		state: text('state', { enum: ['new', 'learning', 'review', 'relearning'] })
-			.notNull()
-			.default('new'),
-		lastReviewAt: text('last_review_at'),
-		updatedAt: text('updated_at')
-			.notNull()
-			.default(sql`(CURRENT_TIMESTAMP)`)
-	},
-	(table) => [
-		index('idx_word_learning_records_due_at').on(table.dueAt),
-		check('chk_word_learning_records_state_enum', sql`${table.state} IN ('new', 'learning', 'review', 'relearning')`),
-		check('chk_word_learning_records_elapsed_days_gte0', sql`${table.elapsedDays} >= 0`),
-		check('chk_word_learning_records_scheduled_days_gte0', sql`${table.scheduledDays} >= 0`),
-		check('chk_word_learning_records_learning_steps_gte0', sql`${table.learningSteps} >= 0`),
-		check('chk_word_learning_records_reps_gte0', sql`${table.reps} >= 0`),
-		check('chk_word_learning_records_lapses_gte0', sql`${table.lapses} >= 0`)
-	]
-);
 
 
 // 生成任务的发布产物（content_json 必须为合法 JSON）。
